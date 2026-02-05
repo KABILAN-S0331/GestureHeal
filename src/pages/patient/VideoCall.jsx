@@ -229,7 +229,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 const prediction = await predict(normalized);
 
                 // Lower threshold to 0.5 and filter out NONE
-                if (prediction && prediction.confidence > 0.5 && prediction.gesture !== 'NONE') {
+                if (prediction && prediction.confidence > 0.85 && prediction.gesture !== 'NONE') {
                     console.log('🤟 Detected:', prediction.gesture);
                     setCurrentGesture(prediction.gesture);
                     setGestureConfidence(prediction.confidence);

@@ -89,7 +89,7 @@ const SignSpeak = ({ onBack }) => {
                 const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
                 const prediction = await predict(normalized);
 
-                if (prediction && prediction.confidence > 0.7) {
+                if (prediction && prediction.confidence > 0.85) {
                     setCurrentGesture(prediction.gesture);
                     setConfidence(prediction.confidence);
 
