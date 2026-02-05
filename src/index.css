@@ -1,184 +1,743 @@
+/* ==================== CSS VARIABLES ==================== */
 :root {
-  --primary: #003c8f;
-  /* Deep medical blue */
-  --primary-light: #1565c0;
-  --secondary: #d32f2f;
-  /* Emergency red */
-  --accent: #26a69a;
-  /* Calm teal */
-  --bg-color: #f8f9fa;
-  /* Soft white */
-  --surface: #ffffff;
-  --text-main: #212121;
-  --text-body: #424242;
-  --text-light: #757575;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --primary-dark: #1d4ed8;
+  --secondary: #64748b;
+  --success: #22c55e;
+  --success-light: #dcfce7;
+  --danger: #ef4444;
+  --danger-light: #fee2e2;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   --radius: 12px;
-  --font-heading: 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --radius-sm: 8px;
 }
 
+/* ==================== RESET & BASE ==================== */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 0.5em;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-/* Utilities */
-.card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1.5rem;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-size: 1.25rem;
-  font-weight: 600;
+/* ==================== UTILITIES ==================== */
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 60, 143, 0.3);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-primary:active {
-  transform: scale(0.98);
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-emergency {
-  background-color: var(--secondary);
+.btn-primary {
+  background: var(--primary);
   color: white;
-  padding: 1rem;
-  border-radius: 50%;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4);
-  animation: pulse 2s infinite;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-light);
+}
+
+.btn-ghost:hover {
+  background: var(--border);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 .btn-lg {
-  width: 100%;
-  padding: 1.5rem;
-  font-size: 1.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
-  }
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
 
-  70% {
-    box-shadow: 0 0 0 15px rgba(211, 47, 47, 0);
-  }
+.btn-emergency {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  animation: pulse-emergency 2s infinite;
+}
 
+@keyframes pulse-emergency {
+
+  0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
 }
 
-.flex-center {
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ==================== LOADING SCREEN ==================== */
+.loading-screen {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, var(--primary-light), var(--bg));
 }
 
-.col {
-  display: flex;
-  flex-direction: column;
-}
-
-.text-center {
+.loading-content {
   text-align: center;
 }
 
-.text-primary {
+.loading-content .logo-icon.large {
+  font-size: 4rem;
+}
+
+.loading-content h1 {
+  margin: 1rem 0;
   color: var(--primary);
 }
 
-.text-secondary {
-  color: var(--secondary);
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  margin: 1rem auto;
+  animation: spin 1s linear infinite;
 }
 
-/* Grid for icons */
-.icon-grid {
+/* ==================== AUTH STYLES ==================== */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 50%, #fef3c7 100%);
+}
+
+.auth-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-card-register {
+  max-width: 500px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.logo-icon {
+  font-size: 2rem;
+}
+
+.auth-logo h1 {
+  font-size: 1.75rem;
+  color: var(--primary);
+}
+
+.auth-subtitle {
+  color: var(--text-light);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.icon-card {
+.role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.role-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.25rem;
   padding: 1rem;
-  border: 2px solid transparent;
-  transition: all 0.2s;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.icon-card:hover {
+.role-btn:hover {
   border-color: var(--primary-light);
-  transform: translateY(-2px);
 }
 
-.icon-card svg {
-  width: 48px;
-  height: 48px;
+.role-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.role-icon {
+  font-size: 1.5rem;
+}
+
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.auth-success {
+  text-align: center;
+  padding: 2rem;
+}
+
+.success-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* ==================== DASHBOARD STYLES ==================== */
+.dashboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-left h1 {
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-greeting {
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-toggle.online {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-toggle.offline {
+  background: var(--border);
+  color: var(--text-light);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Mode Selector */
+.mode-selector-container {
+  padding: 2rem;
+  text-align: center;
+}
+
+.mode-selector-container h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.mode-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.mode-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.mode-card.offline-mode:hover {
+  border-color: var(--warning);
+}
+
+.mode-card.online-mode:hover {
+  border-color: var(--primary);
+}
+
+.mode-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.mode-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.mode-card p {
+  color: var(--text-light);
   margin-bottom: 0.5rem;
-  stroke: var(--primary);
 }
 
-/* ===== ACCESSIBILITY & ANIMATIONS ===== */
-
-/* Minimum touch target for deaf users */
-.touch-target {
-  min-height: 48px;
-  min-width: 48px;
+.mode-desc {
+  font-size: 0.875rem;
+  color: var(--secondary);
 }
 
-/* Blinking alert for incoming calls */
-@keyframes blink-alert {
+/* Emergency Section */
+.emergency-section {
+  padding: 0 2rem 1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.btn-emergency {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.emergency-subtitle {
+  font-size: 0.875rem;
+  font-weight: normal;
+  opacity: 0.9;
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+  padding: 1.5rem 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.dashboard-section h2 {
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+/* Doctors Grid */
+.doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.doctor-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.doctor-avatar {
+  position: relative;
+}
+
+.doctor-avatar img,
+.avatar-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: var(--primary-light);
+}
+
+.online-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: var(--success);
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.doctor-info {
+  flex: 1;
+}
+
+.doctor-info h3 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.specialization {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+/* Appointments */
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.appointment-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.apt-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.apt-date {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.apt-hour {
+  color: var(--primary);
+  font-size: 0.875rem;
+}
+
+.apt-info {
+  flex: 1;
+}
+
+.apt-info h4 {
+  margin-bottom: 0.25rem;
+}
+
+.apt-notes {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+.apt-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.apt-status.status-pending {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.apt-status.status-approved {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.apt-status.status-rejected {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.apt-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.apt-patient {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.apt-patient .avatar {
+  font-size: 1.5rem;
+}
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-light);
+}
+
+.tab-btn:hover {
+  background: var(--border);
+}
+
+.tab-btn.active {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.badge {
+  background: var(--primary);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+}
+
+.badge.emergency {
+  background: var(--danger);
+}
+
+/* Emergency Panel */
+.emergency-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding: 0 2rem;
+}
+
+.warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  margin: 0 2rem 1.5rem;
+  background: var(--warning-light);
+  border-radius: var(--radius-sm);
+}
+
+.emergency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 2rem;
+}
+
+.emergency-card {
+  background: linear-gradient(135deg, #fff5f5, var(--card-bg));
+  border: 2px solid var(--danger-light);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.emergency-pulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--danger);
+  animation: pulse-bar 1.5s infinite;
+}
+
+@keyframes pulse-bar {
 
   0%,
   100% {
@@ -190,119 +749,791 @@ button {
   }
 }
 
-.alert-blink {
-  animation: blink-alert 1s ease-in-out infinite;
+.emergency-info {
+  flex: 1;
 }
 
-/* Glow effect for connected status */
-@keyframes glow-green {
+.emergency-info h3 {
+  color: var(--danger);
+  margin-bottom: 0.5rem;
+}
 
-  0%,
-  100% {
-    box-shadow: 0 0 5px rgba(38, 166, 154, 0.5);
+.patient-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.distance,
+.time {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+.empty-state.large {
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.booking-doctor-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ==================== SIGNSPEAK STYLES ==================== */
+.signspeak-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.signspeak-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.offline-badge {
+  background: var(--warning-light);
+  color: var(--warning);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.header-spacer {
+  width: 60px;
+}
+
+.signspeak-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .signspeak-content {
+    grid-template-columns: 1fr;
   }
-
-  50% {
-    box-shadow: 0 0 20px rgba(38, 166, 154, 0.8);
-  }
 }
 
-.glow-connected {
-  animation: glow-green 2s ease-in-out infinite;
+.camera-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* High contrast focus states for accessibility */
-button:focus-visible,
-input:focus-visible {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
+.video-container {
+  position: relative;
+  background: #1a1a2e;
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 4/3;
 }
 
-/* Large text utility for deaf users */
-.text-xl {
+.camera-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landmark-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: white;
+}
+
+.camera-error {
+  text-align: center;
+}
+
+.stop-camera-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.detection-result {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.gesture-badge {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.phrase-output {
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
 }
 
-.text-2xl {
-  font-size: 2rem;
-  font-weight: bold;
+.confidence-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
 }
 
-.text-3xl {
-  font-size: 2.5rem;
-  font-weight: bold;
+.confidence-fill {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.3s;
 }
 
-/* Status badges */
-.badge-connected {
-  background: var(--accent);
+.history-section {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.history-section h2 {
+  margin-bottom: 1rem;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+.phrase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.phrase-item {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
+.phrase-gesture {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.phrase-text {
+  margin-bottom: 0.25rem;
+}
+
+.phrase-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phrase-time {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.signs-reference {
+  padding: 1rem 1.5rem;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.signs-reference h3 {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+}
+
+.signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.sign-ref-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  background: var(--bg);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.sign-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.sign-phrase {
+  color: var(--text-light);
+}
+
+/* ==================== VIDEO CALL STYLES ==================== */
+.video-call-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+}
+
+.call-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: #1e293b;
   color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
 }
 
-.badge-waiting {
-  background: #ff9800;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
+.call-status span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.badge-offline {
-  background: #9e9e9e;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
+.status.connecting {
+  color: var(--warning);
 }
 
-/* Call timer styling */
+.status.waiting {
+  color: var(--warning);
+}
+
+.status.active {
+  color: var(--success);
+}
+
+.call-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .call-timer {
   font-family: monospace;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--accent);
-  background: rgba(38, 166, 154, 0.1);
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
 }
 
-/* Smooth transitions for all interactive elements */
-button,
-.card,
-input {
-  transition: all 0.2s ease;
+.call-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-/* Card hover effect */
-.card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+.doctor-call .call-content {
+  grid-template-columns: 2fr 1fr;
 }
 
-/* Emergency incoming alert animation */
-@keyframes shake {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  25% {
-    transform: translateX(-5px);
-  }
-
-  75% {
-    transform: translateX(5px);
+@media (max-width: 900px) {
+  .doctor-call .call-content {
+    grid-template-columns: 1fr;
   }
 }
 
-.shake-alert {
-  animation: shake 0.5s ease-in-out infinite;
+.video-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
+
+.video-wrapper {
+  position: relative;
+  background: #1e293b;
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 16/9;
+}
+
+.self-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gesture-overlay {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  color: white;
+}
+
+.gesture-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.gesture-confidence {
+  margin-top: 0.5rem;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gesture-confidence .confidence-bar {
+  height: 100%;
+  background: var(--success);
+}
+
+.messages-section {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+}
+
+.messages-section h3 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.messages-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.empty-messages {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  background: #334155;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.message.doctor-message {
+  border-left: 3px solid var(--primary);
+}
+
+.message-content {
+  display: block;
+  font-weight: 500;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.quick-phrases-section {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+}
+
+.quick-phrases-section h3 {
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.quick-phrases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.quick-phrase-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #334155;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-phrase-btn:hover {
+  background: #475569;
+  border-color: var(--primary);
+}
+
+.phrase-icon {
+  font-size: 1.25rem;
+}
+
+.phrase-text {
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+/* Doctor Call Specific */
+.gestures-panel {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+}
+
+.gesture-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.no-gestures {
+  color: #64748b;
+  text-align: center;
+  padding: 1rem;
+}
+
+.gesture-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: #334155;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.gesture-time {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quick-responses {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+}
+
+.quick-responses h3 {
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.response-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.response-btn {
+  padding: 0.75rem;
+  background: #334155;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  color: white;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.response-btn.question:hover {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.response-btn.instruction:hover {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.chat-panel {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+  flex: 1;
+}
+
+.chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.no-messages {
+  color: #64748b;
+  text-align: center;
+  padding: 1rem;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.chat-message.sent {
+  background: rgba(37, 99, 235, 0.2);
+  margin-left: 1rem;
+}
+
+.chat-message.received {
+  background: #334155;
+  margin-right: 1rem;
+}
+
+.message-type-icon {
+  font-size: 0.875rem;
+}
+
+/* Sign Video Overlay */
+.sign-video-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.sign-video-modal {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+.video-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--primary);
+  color: white;
+}
+
+.sign-video-modal .video-container {
+  aspect-ratio: 16/9;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sign-video-modal video {
+  width: 100%;
+  height: 100%;
+}
+
+.sign-video-modal .video-placeholder {
+  text-align: center;
+  color: #666;
+}
+
+.sign-video-modal .video-placeholder span {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.patient-video .video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #64748b;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+/* Gesture Panel Styles */
+.gestures-panel {
+    background: #1e293b;
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.gesture-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.gesture-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.gesture-item.latest {
+    opacity: 1;
+    background: var(--primary);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    font-weight: bold;
+    font-size: 1.1em;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.gesture-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gesture-time {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.no-gestures {
+    text-align: center;
+    opacity: 0.5;
+    padding: 1rem;
+}
+
