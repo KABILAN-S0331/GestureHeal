@@ -161,6 +161,19 @@ const DoctorDashboard = () => {
         }
     };
 
+    // Start scheduled appointment call
+    const handleStartCall = async (appointment) => {
+        // Create a call-like object for the video call component
+        setActiveCall({
+            id: appointment.id,
+            patient_id: appointment.patient_id,
+            patient_name: appointment.patient?.full_name || 'Patient',
+            doctor_id: user.id,
+            status: 'connected',
+            room_url: `https://gestureheal.daily.co/apt-${appointment.id.slice(0, 8)}`
+        });
+    };
+
     // If in active call, show video call component
     if (activeCall) {
         return (
@@ -309,7 +322,10 @@ const DoctorDashboard = () => {
                                                     })}
                                                 </span>
                                             </div>
-                                            <button className="btn btn-primary btn-sm">
+                                            <button
+                                                className="btn btn-primary btn-sm"
+                                                onClick={() => handleStartCall(apt)}
+                                            >
                                                 Start Call
                                             </button>
                                         </div>

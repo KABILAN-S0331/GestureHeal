@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getOnlineDoctors, createAppointment, getAppointments } from '../../lib/supabase';
+import { getOnlineDoctors, createAppointment, getAppointments, subscribeToAppointments } from '../../lib/supabase';
 import SignSpeak from './SignSpeak';
 import VideoCall from './VideoCall';
 
 const PatientDashboard = () => {
-    const { profile, signOut, updateUserProfile } = useAuth();
+    const { profile, signOut, updateUserProfile, user } = useAuth();
     const [mode, setMode] = useState('dashboard'); // dashboard, signspeak, connect, videocall
     const [doctors, setDoctors] = useState([]);
     const [appointments, setAppointments] = useState([]);
@@ -20,6 +20,26 @@ const PatientDashboard = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Realtime subscription for appointment updates
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const subscription = subscribeToAppointments(user.id, 'patient', (payload) => {
+            console.log('Appointment update:', payload);
+            fetchData(); // Refresh appointments when updated
+        });
+
+        // Polling fallback for reliability
+        const pollInterval = setInterval(() => {
+            fetchData();
+        }, 10000); // Poll every 10 seconds
+
+        return () => {
+            subscription?.unsubscribe?.();
+            clearInterval(pollInterval);
+        };
+    }, [user?.id]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -77,7 +97,6 @@ const PatientDashboard = () => {
 
             setActiveCall({ location, status: 'connecting' });
             setMode('videocall');
-
             // Reset flag after a delay in case call fails or ends
             setTimeout(() => { isStartingEmergency.current = false; }, 5000);
         };
@@ -102,6 +121,19 @@ const PatientDashboard = () => {
             // No geolocation support, use fallback
             proceedWithLocation({ lat: 0, lng: 0 });
         }
+    };
+
+    // Join a scheduled appointment call
+    const handleJoinCall = (appointment) => {
+        setActiveCall({
+            id: appointment.id,
+            doctor_id: appointment.doctor_id,
+            doctor_name: appointment.doctor?.full_name || 'Doctor',
+            patient_id: profile?.id,
+            status: 'connecting',
+            room_url: `https://gestureheal.daily.co/apt-${appointment.id.slice(0, 8)}`
+        });
+        setMode('videocall');
     };
 
     // SignSpeak Mode
@@ -150,7 +182,7 @@ const PatientDashboard = () => {
                         <h3>SignSpeak</h3>
                         <p>Offline Mode</p>
                         <span className="mode-desc">
-                            Translate your signs to text phrases without internet
+                            Translate your signs to text phrases
                         </span>
                     </button>
 
@@ -256,11 +288,21 @@ const PatientDashboard = () => {
                                             <p>{apt.doctor?.specialization}</p>
                                             {apt.notes && <p className="apt-notes">{apt.notes}</p>}
                                         </div>
-                                        <div className={`apt-status status-${apt.status}`}>
-                                            {apt.status === 'pending' && '⏳ Pending'}
-                                            {apt.status === 'approved' && '✅ Approved'}
-                                            {apt.status === 'rejected' && '❌ Rejected'}
-                                            {apt.status === 'completed' && '✓ Completed'}
+                                        <div className="apt-actions">
+                                            <span className={`apt-status status-${apt.status}`}>
+                                                {apt.status === 'pending' && '⏳ Pending'}
+                                                {apt.status === 'approved' && '✅ Approved'}
+                                                {apt.status === 'rejected' && '❌ Rejected'}
+                                                {apt.status === 'completed' && '✓ Completed'}
+                                            </span>
+                                            {apt.status === 'approved' && (
+                                                <button
+                                                    className="btn btn-primary btn-sm"
+                                                    onClick={() => handleJoinCall(apt)}
+                                                >
+                                                    📞 Join Call
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
