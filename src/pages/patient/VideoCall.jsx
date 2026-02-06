@@ -307,16 +307,37 @@ const PatientVideoCall = ({ callData, onEnd }) => {
 
             streamRef.current = stream;
 
-            // Wait a tick for video element to be available
-            setTimeout(() => {
+            // Wait for video element to be available and start detection
+            const initVideo = () => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
-                    videoRef.current.play().catch(e => console.warn('Video play error:', e));
+                    videoRef.current.play()
+                        .then(() => {
+                            setCameraActive(true);
+                            console.log('✅ Camera auto-started for call');
+                            // Start gesture detection if hands are available
+                            if (handsRef.current) {
+                                startDetection();
+                                console.log('✅ Gesture detection started');
+                            } else {
+                                console.log('ℹ️ Camera active, gesture detection not yet ready');
+                                // Retry detection start after MediaPipe loads
+                                setTimeout(() => {
+                                    if (handsRef.current) {
+                                        startDetection();
+                                        console.log('✅ Gesture detection started (delayed)');
+                                    }
+                                }, 2000);
+                            }
+                        })
+                        .catch(e => console.warn('Video play error:', e));
+                } else {
+                    // Video element not ready yet, retry
+                    setTimeout(initVideo, 100);
                 }
-            }, 100);
+            };
 
-            setCameraActive(true);
-            console.log('✅ Camera auto-started for call');
+            initVideo();
         } catch (err) {
             console.error('❌ Auto-start camera error:', err);
         }
