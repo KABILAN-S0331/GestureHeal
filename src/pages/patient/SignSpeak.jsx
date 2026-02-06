@@ -72,6 +72,8 @@ const SignSpeak = ({ onBack }) => {
     }, []);
 
     // Handle hand detection results
+    const lastGestureRef = useRef(null);
+
     const handleHandResults = useCallback(async (results) => {
         if (!canvasRef.current) return;
 
@@ -90,30 +92,39 @@ const SignSpeak = ({ onBack }) => {
                 const prediction = await predict(normalized);
 
                 if (prediction && prediction.confidence > 0.85) {
-                    setCurrentGesture(prediction.gesture);
-                    setConfidence(prediction.confidence);
+                    // Only update if it's a NEW different gesture
+                    if (prediction.gesture !== lastGestureRef.current) {
+                        lastGestureRef.current = prediction.gesture;
+                        setCurrentGesture(prediction.gesture);
+                        setConfidence(prediction.confidence);
 
-                    // Generate phrase
-                    const phrase = GESTURE_PHRASES[prediction.gesture] || prediction.gesture;
+                        // Generate phrase
+                        const phrase = GESTURE_PHRASES[prediction.gesture] || prediction.gesture;
 
-                    // Add to history if new
-                    if (phraseHistory.length === 0 ||
-                        phraseHistory[phraseHistory.length - 1].gesture !== prediction.gesture) {
-                        setPhraseHistory(prev => [...prev, {
-                            gesture: prediction.gesture,
-                            phrase: phrase,
-                            time: new Date().toLocaleTimeString()
-                        }]);
+                        // Add to history (already deduplicated by checking last entry)
+                        setPhraseHistory(prev => {
+                            // Don't add if same as last entry
+                            if (prev.length > 0 && prev[prev.length - 1].gesture === prediction.gesture) {
+                                return prev;
+                            }
+                            return [...prev, {
+                                gesture: prediction.gesture,
+                                phrase: phrase,
+                                time: new Date().toLocaleTimeString()
+                            }];
+                        });
                         setShowPhrase(true);
                         setTimeout(() => setShowPhrase(false), 3000);
+                    } else {
+                        // Same gesture - just update confidence
+                        setConfidence(prediction.confidence);
                     }
                 }
             }
-        } else {
-            setCurrentGesture(null);
-            setConfidence(0);
         }
-    }, [phraseHistory]);
+        // Note: We do NOT clear currentGesture when hand is removed
+        // The gesture stays visible until a new different gesture is detected
+    }, []);
 
     // Draw hand landmarks
     const drawLandmarks = (ctx, landmarks) => {
