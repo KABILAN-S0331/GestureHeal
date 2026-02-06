@@ -19,6 +19,21 @@ const DailyVideoFrame = ({
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Store callbacks in refs to avoid re-triggering the effect
+    const onJoinedRef = useRef(onJoined);
+    const onLeftRef = useRef(onLeft);
+    const onParticipantJoinedRef = useRef(onParticipantJoined);
+    const onParticipantLeftRef = useRef(onParticipantLeft);
+    const onErrorRef = useRef(onError);
+
+    useEffect(() => {
+        onJoinedRef.current = onJoined;
+        onLeftRef.current = onLeft;
+        onParticipantJoinedRef.current = onParticipantJoined;
+        onParticipantLeftRef.current = onParticipantLeft;
+        onErrorRef.current = onError;
+    }, [onJoined, onLeft, onParticipantJoined, onParticipantLeft, onError]);
+
     useEffect(() => {
         if (!roomUrl || !containerRef.current) return;
 
@@ -45,24 +60,24 @@ const DailyVideoFrame = ({
                 // Set up event handlers
                 callFrame.on('joined-meeting', (event) => {
                     setIsLoading(false);
-                    onJoined?.(event);
+                    onJoinedRef.current?.(event);
                 });
 
                 callFrame.on('left-meeting', (event) => {
-                    onLeft?.(event);
+                    onLeftRef.current?.(event);
                 });
 
                 callFrame.on('participant-joined', (event) => {
-                    onParticipantJoined?.(event);
+                    onParticipantJoinedRef.current?.(event);
                 });
 
                 callFrame.on('participant-left', (event) => {
-                    onParticipantLeft?.(event);
+                    onParticipantLeftRef.current?.(event);
                 });
 
                 callFrame.on('error', (event) => {
                     setError(event.errorMsg);
-                    onError?.(event);
+                    onErrorRef.current?.(event);
                 });
 
                 // Join the room
@@ -75,7 +90,7 @@ const DailyVideoFrame = ({
                 console.error('Failed to join Daily call:', err);
                 setError(err.message);
                 setIsLoading(false);
-                onError?.(err);
+                onErrorRef.current?.(err);
             }
         };
 
@@ -88,7 +103,7 @@ const DailyVideoFrame = ({
                 callRef.current = null;
             }
         };
-    }, [roomUrl]);
+    }, [roomUrl, userName]); // Added userName as it's used in initCall
 
     return (
         <div className="daily-video-container">

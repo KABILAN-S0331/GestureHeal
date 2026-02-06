@@ -35,6 +35,7 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
     const [messages, setMessages] = useState([]);
     const [signVideos, setSignVideos] = useState([]);
     const [playingVideo, setPlayingVideo] = useState(null);
+    const [textMessage, setTextMessage] = useState('');
     const [callDuration, setCallDuration] = useState(0);
 
     const videoRef = useRef(null);
@@ -128,6 +129,21 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
         if (video) {
             setPlayingVideo(video);
         }
+    };
+
+    // Send text message
+    const handleSendTextMessage = async () => {
+        if (!textMessage.trim() || !callData?.id) return;
+
+        await sendMessage(callData.id, user.id, textMessage, 'text');
+        setMessages(prev => [...prev, {
+            id: Date.now(),
+            sender_id: user.id,
+            content: textMessage,
+            message_type: 'text',
+            created_at: new Date().toISOString()
+        }]);
+        setTextMessage('');
     };
 
     // End call
@@ -351,6 +367,28 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                                     {response.text}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Text Input Section */}
+                    <div className="text-input-section">
+                        <h3>💬 Type Message</h3>
+                        <div className="text-input-wrapper">
+                            <input
+                                type="text"
+                                value={textMessage}
+                                onChange={(e) => setTextMessage(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSendTextMessage()}
+                                placeholder="Type a message to patient..."
+                                className="text-message-input"
+                            />
+                            <button
+                                className="btn btn-primary send-btn"
+                                onClick={handleSendTextMessage}
+                                disabled={!textMessage.trim()}
+                            >
+                                Send
+                            </button>
                         </div>
                     </div>
 

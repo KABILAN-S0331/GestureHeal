@@ -1091,7 +1091,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0f172a;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
 }
 
 .call-header {
@@ -1099,8 +1099,10 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .call-status span {
@@ -1157,10 +1159,12 @@ body {
 
 .video-wrapper {
   position: relative;
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   overflow: hidden;
   aspect-ratio: 16/9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .self-video {
@@ -1199,10 +1203,11 @@ body {
 }
 
 .messages-section {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   padding: 1rem;
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .messages-section h3 {
@@ -1243,10 +1248,11 @@ body {
 }
 
 .quick-phrases-section {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   padding: 1rem;
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .quick-phrases-section h3 {
@@ -1276,6 +1282,8 @@ body {
 .quick-phrase-btn:hover {
   background: #475569;
   border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .phrase-icon {
@@ -1327,10 +1335,11 @@ body {
 }
 
 .quick-responses {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   padding: 1rem;
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .quick-responses h3 {
@@ -1347,32 +1356,38 @@ body {
 
 .response-btn {
   padding: 0.75rem;
-  background: #334155;
-  border: 2px solid transparent;
+  background: rgba(51, 65, 85, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
   color: white;
   cursor: pointer;
   text-align: left;
   font-size: 0.8rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 .response-btn.question:hover {
   border-color: var(--warning);
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(245, 158, 11, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
 }
 
 .response-btn.instruction:hover {
   border-color: var(--primary);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(37, 99, 235, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .chat-panel {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   padding: 1rem;
   color: white;
   flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .chat-messages {
@@ -1482,7 +1497,7 @@ body {
 
 /* Gesture Panel Styles */
 .gestures-panel {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: var(--radius);
   padding: 1rem;
   color: white;
@@ -1490,6 +1505,8 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .gesture-list {
@@ -1505,20 +1522,34 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
   opacity: 0.6;
   transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .gesture-item.latest {
   opacity: 1;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
   font-weight: bold;
   font-size: 1.1em;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 4px 24px rgba(37, 99, 235, 0.8);
+  }
 }
 
 .gesture-label {
@@ -1536,6 +1567,67 @@ body {
   text-align: center;
   opacity: 0.5;
   padding: 1rem;
+}
+
+/* ==================== TEXT INPUT SECTION ==================== */
+.text-input-section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-input-section h3 {
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.text-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.text-message-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #334155;
+  border-radius: var(--radius-sm);
+  background: #0f172a;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.text-message-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.text-message-input::placeholder {
+  color: #64748b;
+}
+
+.send-btn {
+  padding: 0.75rem 1.25rem;
+  white-space: nowrap;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ==================== MOBILE RESPONSIVE STYLES ==================== */

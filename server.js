@@ -47,6 +47,7 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ success: true, state: currentState }));
                 console.log('Update received:', Object.keys(updates));
             } catch (e) {
+                console.error('Invalid JSON received:', e);
                 res.writeHead(400);
                 res.end('Invalid JSON');
             }
