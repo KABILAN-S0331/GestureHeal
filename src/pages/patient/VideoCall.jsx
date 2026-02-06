@@ -35,7 +35,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     const [currentGesture, setCurrentGesture] = useState(null);
     const [gestureConfidence, setGestureConfidence] = useState(0);
     const [cameraActive, setCameraActive] = useState(false);
-    const [detectionRunning, setDetectionRunning] = useState(false);
+    const [detectionRunning, setDetectionRunning] = useState(false); // Kept for status indication if needed, though UI removed per reference
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
@@ -129,6 +129,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     const [mediapipeReady, setMediapipeReady] = useState(false);
 
     // Use ref to access latest callId and currentGesture inside MediaPipe callback without re-binding
+    // CRITICAL FIX: This prevents stale closures in the detection loop
     const callIdRef = useRef(null);
     const currentGestureRef = useRef(null);
 
@@ -140,34 +141,31 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         currentGestureRef.current = currentGesture;
     }, [currentGesture]);
 
-    // Handle hand detection - defined BEFORE MediaPipe init so it can be passed to onResults
+    // Handle hand detection
     const handleHandResults = useCallback(async (results) => {
-        if (!callIdRef.current) {
-            console.log('⚠️ No callId available yet');
-            return; // Wait for call ID
-        }
+        if (!callIdRef.current) return; // Wait for call ID
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             if (isModelLoaded()) {
                 const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
                 const prediction = await predict(normalized);
 
-                // Log ALL predictions for debugging
+                // Log all predictions for debugging
                 if (prediction) {
                     console.log('🖐️ Prediction:', prediction.gesture,
-                        'Confidence:', (prediction.confidence * 100).toFixed(1) + '%',
-                        prediction.confidence >= 0.70 ? '✅ Above threshold' : '❌ Below 70%');
+                        'Confidence:', (prediction.confidence * 100).toFixed(1) + '%');
                 }
 
-                if (prediction && prediction.confidence > 0.70 && prediction.gesture !== 'NONE') {
+                // Threshold set to 85% as requested
+                if (prediction && prediction.confidence > 0.85 && prediction.gesture !== 'NONE') {
                     console.log('🤟 Detected:', prediction.gesture, 'Confidence:', prediction.confidence.toFixed(2));
                     setCurrentGesture(prediction.gesture);
                     setGestureConfidence(prediction.confidence);
 
-                    // Send gesture as message only if it changed
+                    // Send gesture as message only if it changed (using Ref to avoid stale closure)
                     if (prediction.gesture !== currentGestureRef.current) {
-                        console.log('🚀 Sending gesture to call:', callIdRef.current, '- Gesture:', prediction.gesture);
-                        await sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
+                        console.log('🚀 Sending gesture:', prediction.gesture);
+                        sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
                     }
                 } else if (!prediction || prediction.gesture === 'NONE') {
                     if (prediction && prediction.confidence > 0.8) {
@@ -175,8 +173,6 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                         setGestureConfidence(0);
                     }
                 }
-            } else {
-                console.warn('⚠️ Model not loaded yet');
             }
         } else {
             // No hands detected - clear gesture
@@ -185,7 +181,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 setGestureConfidence(0);
             }
         }
-    }, [user]);
+    }, [user]); // Removed currentGesture dependency to rely on Ref
 
     useEffect(() => {
         const initHands = async () => {
@@ -220,7 +216,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
             }
         };
         initHands();
-    }, [handleHandResults]);
+    }, [handleHandResults]); // Added handleHandResults dependency
 
     // WebRTC Signaling (Answer side)
     const peerConnection = useRef(null);
@@ -242,11 +238,11 @@ const PatientVideoCall = ({ callData, onEnd }) => {
             await sendSignal(callId, { type: 'patient-ready' });
         };
 
-        // Send ready signal immediately and periodically (less frequent)
+        // Send ready signal immediately and periodically
         sendReadySignal();
-        readyInterval = setInterval(sendReadySignal, 5000); // Reduced frequency
+        readyInterval = setInterval(sendReadySignal, 3000);
 
-        // Process an offer (shared between broadcast and polling)
+        // Process an offer
         const processOffer = async (offerData) => {
             if (connected || peerConnection.current) return; // Already processing
 
@@ -292,14 +288,16 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 }
             }
 
-            // Create and send answer
+            // Create answer
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
+
+            // Send answer
             await sendSignal(callId, { type: 'answer', answer });
             console.log('✅ Answer sent!');
         };
 
-        // Poll for stored offers (fallback when broadcast misses)
+        // Poll for stored offers (fallback)
         const pollInterval = setInterval(async () => {
             if (connected) {
                 clearInterval(pollInterval);
@@ -315,7 +313,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         }, 3000);
 
         const subscription = subscribeToSignals(callId, async (data) => {
-            console.log('📡 Patient received signal:', data.type);
+            console.log('📡 Signal received:', data.type);
 
             if (data.type === 'offer') {
                 await processOffer(data);
@@ -336,7 +334,8 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         });
 
         return () => {
-            clearInterval(readyInterval);
+            if (readyInterval) clearInterval(readyInterval);
+            if (pollInterval) clearInterval(pollInterval);
             subscription.unsubscribe();
             if (peerConnection.current) {
                 peerConnection.current.close();
@@ -344,43 +343,29 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         };
     }, [callId, cameraActive]);
 
-    // Auto-start camera (used when joining calls to activate WebRTC immediately)
+    // Auto-start camera
     const autoStartCamera = async () => {
         try {
             console.log('📹 Auto-starting camera...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user', width: 640, height: 480 },
-                audio: true // Also get audio for call
+                audio: true
             });
 
             streamRef.current = stream;
 
-            // Wait for video element to be available and start detection
             const initVideo = () => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                     videoRef.current.play()
                         .then(() => {
                             setCameraActive(true);
-                            console.log('✅ Camera auto-started for call');
-                            // Start gesture detection if hands are available
                             if (handsRef.current) {
                                 startDetection();
-                                console.log('✅ Gesture detection started');
-                            } else {
-                                console.log('ℹ️ Camera active, gesture detection not yet ready');
-                                // Retry detection start after MediaPipe loads
-                                setTimeout(() => {
-                                    if (handsRef.current) {
-                                        startDetection();
-                                        console.log('✅ Gesture detection started (delayed)');
-                                    }
-                                }, 2000);
                             }
                         })
                         .catch(e => console.warn('Video play error:', e));
                 } else {
-                    // Video element not ready yet, retry
                     setTimeout(initVideo, 100);
                 }
             };
@@ -391,7 +376,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         }
     };
 
-    // Start camera (manual button click)
+    // Start camera (manual)
     const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -403,11 +388,8 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 videoRef.current.srcObject = stream;
                 await videoRef.current.play();
                 setCameraActive(true);
-                // Only start detection if hands are available
                 if (handsRef.current) {
                     startDetection();
-                } else {
-                    console.log('ℹ️ Camera active, but gesture detection not available');
                 }
             }
         } catch (err) {
@@ -417,9 +399,8 @@ const PatientVideoCall = ({ callData, onEnd }) => {
 
     // Detection loop with error handling
     const startDetection = () => {
-        // Prevent starting multiple loops
         if (animationRef.current) {
-            console.log('⚠️ Detection already running, skipping duplicate start');
+            console.log('⚠️ Detection already running');
             return;
         }
 
@@ -436,7 +417,6 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                     await handsRef.current.send({ image: videoRef.current });
                 }
             } catch (err) {
-                // Silently handle detection errors - don't crash the app
                 console.warn('Detection frame error:', err.message);
             }
             animationRef.current = requestAnimationFrame(detect);
@@ -469,6 +449,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         }
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
+            setDetectionRunning(false);
         }
 
         onEnd();
@@ -487,18 +468,16 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         };
     }, []);
 
-    // Start camera on mount (for emergency calls where autoStart isn't used)
+    // Start camera on mount
     useEffect(() => {
-        // Only auto-start if no call ID yet (emergency flow uses initCall -> autoStartCamera)
         if (!callId) {
             startCamera();
         }
     }, []);
 
-    // Start detection when both camera AND MediaPipe are ready
+    // Also start detection if camera+mediapipe ready (safeguard)
     useEffect(() => {
         if (cameraActive && mediapipeReady && handsRef.current && !animationRef.current) {
-            console.log('🔄 Starting detection (camera + MediaPipe both ready)');
             startDetection();
         }
     }, [cameraActive, mediapipeReady]);
@@ -575,7 +554,20 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                             }}
                         />
 
-                        {/* Gesture Detection Status Indicator */}
+                        {/* Gesture Classification Feedback */}
+                        {currentGesture && (
+                            <div className="gesture-overlay">
+                                <span className="gesture-label">🤟 {currentGesture}</span>
+                                <div className="gesture-confidence">
+                                    <div
+                                        className="confidence-bar"
+                                        style={{ width: `${gestureConfidence * 100}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Status Indicator (Restored from previous working version) */}
                         <div style={{
                             position: 'absolute',
                             top: '10px',
@@ -596,21 +588,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                             <div>
                                 {detectionRunning ? '✅' : '⏳'} Detection: {detectionRunning ? 'Running' : 'Stopped'}
                             </div>
-                            {callId && <div style={{ marginTop: '4px', fontSize: '0.7rem', opacity: 0.7 }}>Call ID: {callId.slice(0, 8)}</div>}
                         </div>
-
-                        {/* Gesture Overlay */}
-                        {currentGesture && (
-                            <div className="gesture-overlay">
-                                <span className="gesture-label">🤟 {currentGesture}</span>
-                                <div className="gesture-confidence">
-                                    <div
-                                        className="confidence-bar"
-                                        style={{ width: `${gestureConfidence * 100}%` }}
-                                    />
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
