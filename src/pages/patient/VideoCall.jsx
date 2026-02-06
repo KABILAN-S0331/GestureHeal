@@ -171,8 +171,20 @@ const PatientVideoCall = ({ callData, onEnd }) => {
 
         console.log('📡 Subscribing to signals for call:', callId, 'Camera active:', cameraActive);
 
+        // Send patient-ready signal to let doctor know we're ready
+        const sendReadySignal = async () => {
+            console.log('👋 Sending patient-ready signal...');
+            await sendSignal(callId, { type: 'patient-ready' });
+        };
+
+        // Send ready signal immediately
+        sendReadySignal();
+
+        // Also send periodically in case doctor missed it
+        const readyInterval = setInterval(sendReadySignal, 2000);
+
         const subscription = subscribeToSignals(callId, async (data) => {
-            console.log('📡 Signal received:', data.type);
+            console.log('📡 Patient received signal:', data.type);
 
             if (data.type === 'offer') {
                 console.log('📞 Received offer, creating answer...');
@@ -239,6 +251,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         });
 
         return () => {
+            clearInterval(readyInterval);
             subscription.unsubscribe();
             if (peerConnection.current) {
                 peerConnection.current.close();

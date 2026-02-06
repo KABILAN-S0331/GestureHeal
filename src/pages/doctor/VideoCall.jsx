@@ -153,8 +153,9 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
     const remoteVideoRef = useRef(null);
     const peerConnection = useRef(null);
     const candidateQueue = useRef([]); // Buffer for ICE candidates
+    const offerSent = useRef(false);
 
-    // WebRTC Signaling (Offer side)
+    // WebRTC Signaling (Offer side - waits for patient ready)
     useEffect(() => {
         console.log('🔄 DoctorVideoCall Effect Triggered. CallData:', callData);
         if (!callData?.id) {
@@ -162,25 +163,26 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
             return;
         }
 
-        const startCall = async () => {
-            console.log('📞 Starting WebRTC call...');
-            const pc = new RTCPeerConnection({
+        let pc = null;
+        let localStream = null;
+        let offerInterval = null;
+
+        const initCall = async () => {
+            console.log('📞 Initializing WebRTC call...');
+            pc = new RTCPeerConnection({
                 iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
             });
             peerConnection.current = pc;
 
             // Get local stream (Doctor)
             try {
-                const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                console.log('📹 Doctor camera acquired:', localStream.getTracks().map(t => `${t.kind}: ${t.enabled}`));
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                console.log('📹 Doctor camera acquired');
 
                 // Add tracks to PC
                 localStream.getTracks().forEach(track => {
-                    console.log('➕ Adding track to PC:', track.kind, track.id);
                     pc.addTrack(track, localStream);
                 });
-
-                console.log('✅ Doctor tracks added to peer connection');
             } catch (err) {
                 console.error('❌ Error accessing media devices:', err);
             }
@@ -200,17 +202,33 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                 }
             };
 
-            // Create offer
-            const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
-            await pc.setLocalDescription(offer);
+            // Function to send offer
+            const sendOffer = async () => {
+                if (pc.signalingState !== 'stable' && pc.signalingState !== 'have-local-offer') {
+                    console.log('⚠️ Cannot send offer in state:', pc.signalingState);
+                    return;
+                }
 
-            // Send offer
-            await sendSignal(callData.id, { type: 'offer', offer });
-            console.log('✅ Offer sent');
+                try {
+                    const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
+                    await pc.setLocalDescription(offer);
+                    await sendSignal(callData.id, { type: 'offer', offer });
+                    console.log('✅ Offer sent');
+                    offerSent.current = true;
+                } catch (e) {
+                    console.error('Error creating offer:', e);
+                }
+            };
 
-            // Listen for answer
+            // Subscribe to signals FIRST (before sending offer)
             const subscription = subscribeToSignals(callData.id, async (data) => {
-                if (data.type === 'answer') {
+                console.log('📡 Doctor received signal:', data.type);
+
+                if (data.type === 'patient-ready') {
+                    // Patient is ready, send offer now
+                    console.log('👋 Patient ready signal received, sending offer...');
+                    await sendOffer();
+                } else if (data.type === 'answer') {
                     console.log('✅ Received answer');
                     if (pc.signalingState === 'have-local-offer') {
                         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
@@ -220,13 +238,10 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                             const candidate = candidateQueue.current.shift();
                             try {
                                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                                console.log('✅ Added buffered candidate');
                             } catch (e) {
                                 console.error('Error adding buffered candidate', e);
                             }
                         }
-                    } else {
-                        console.warn('⚠️ Ignored answer in wrong state:', pc.signalingState);
                     }
                 } else if (data.type === 'ice-candidate') {
                     if (pc.remoteDescription) {
@@ -236,22 +251,34 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                             console.error('Error adding ice candidate', e);
                         }
                     } else {
-                        // Queue candidate if remote description not set
-                        console.log('⏳ Buffering ICE candidate');
                         candidateQueue.current.push(data.candidate);
                     }
                 }
             });
 
-            return () => {
-                subscription.unsubscribe();
-                if (peerConnection.current) {
-                    peerConnection.current.close();
+            // Also periodically send offer in case patient missed it (every 3 seconds)
+            offerInterval = setInterval(async () => {
+                if (!offerSent.current || pc.connectionState === 'disconnected') {
+                    console.log('🔄 Re-sending offer...');
+                    await sendOffer();
                 }
-            };
+            }, 3000);
+
+            // Send initial offer immediately too (for patients already waiting)
+            setTimeout(() => sendOffer(), 500);
+
+            return subscription;
         };
 
-        startCall();
+        const subscriptionPromise = initCall();
+
+        return () => {
+            subscriptionPromise.then(sub => sub?.unsubscribe?.());
+            if (offerInterval) clearInterval(offerInterval);
+            if (peerConnection.current) {
+                peerConnection.current.close();
+            }
+        };
     }, [callData?.id]);
 
     return (
