@@ -37,6 +37,7 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
     const [playingVideo, setPlayingVideo] = useState(null);
     const [textMessage, setTextMessage] = useState('');
     const [callDuration, setCallDuration] = useState(0);
+    const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
 
     const videoRef = useRef(null);
     const signVideoRef = useRef(null);
@@ -215,6 +216,7 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                 console.log('   Tracks:', event.streams[0].getTracks().map(t => `${t.kind}: ${t.enabled}`));
                 if (remoteVideoRef.current) {
                     remoteVideoRef.current.srcObject = event.streams[0];
+                    setHasRemoteVideo(true); // Hide the waiting placeholder
                     // Force play the video
                     remoteVideoRef.current.play().catch(e => console.log('Video play error:', e));
                 }
@@ -325,18 +327,20 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                             style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#222' }}
                         />
                         {/* Placeholder when no video */}
-                        <div className="video-placeholder" style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: '#64748b',
-                            textAlign: 'center',
-                            zIndex: 0
-                        }}>
-                            <span style={{ fontSize: '48px' }}>👤</span>
-                            <p>Waiting for patient video...</p>
-                        </div>
+                        {!hasRemoteVideo && (
+                            <div className="video-placeholder" style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                color: '#64748b',
+                                textAlign: 'center',
+                                zIndex: 0
+                            }}>
+                                <span style={{ fontSize: '48px' }}>👤</span>
+                                <p>Waiting for patient video...</p>
+                            </div>
+                        )}
 
                         {/* Doctor's Local Video Preview */}
                         <video
