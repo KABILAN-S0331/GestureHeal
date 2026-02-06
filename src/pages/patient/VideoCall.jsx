@@ -127,13 +127,24 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     // Initialize MediaPipe Hands
     const [mediapipeReady, setMediapipeReady] = useState(false);
 
-    // Use ref to access latest callId inside MediaPipe callback without re-binding
+    // Use ref to access latest callId and currentGesture inside MediaPipe callback without re-binding
     const callIdRef = useRef(null);
-    useEffect(() => { callIdRef.current = callId; }, [callId]);
+    const currentGestureRef = useRef(null);
+
+    useEffect(() => {
+        callIdRef.current = callId;
+    }, [callId]);
+
+    useEffect(() => {
+        currentGestureRef.current = currentGesture;
+    }, [currentGesture]);
 
     // Handle hand detection - defined BEFORE MediaPipe init so it can be passed to onResults
     const handleHandResults = useCallback(async (results) => {
-        if (!callIdRef.current) return; // Wait for call ID
+        if (!callIdRef.current) {
+            console.log('⚠️ No callId available yet');
+            return; // Wait for call ID
+        }
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             if (isModelLoaded()) {
@@ -141,14 +152,14 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 const prediction = await predict(normalized);
 
                 if (prediction && prediction.confidence > 0.90 && prediction.gesture !== 'NONE') {
-                    console.log('🤟 Detected:', prediction.gesture);
+                    console.log('🤟 Detected:', prediction.gesture, 'Confidence:', prediction.confidence.toFixed(2));
                     setCurrentGesture(prediction.gesture);
                     setGestureConfidence(prediction.confidence);
 
-                    // Send gesture as message
-                    if (prediction.gesture !== currentGesture) {
-                        console.log('🚀 Sending gesture:', prediction.gesture);
-                        sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
+                    // Send gesture as message only if it changed
+                    if (prediction.gesture !== currentGestureRef.current) {
+                        console.log('🚀 Sending gesture to call:', callIdRef.current, '- Gesture:', prediction.gesture);
+                        await sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
                     }
                 } else if (!prediction || prediction.gesture === 'NONE') {
                     if (prediction && prediction.confidence > 0.8) {
@@ -156,12 +167,17 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                         setGestureConfidence(0);
                     }
                 }
+            } else {
+                console.warn('⚠️ Model not loaded yet');
             }
         } else {
-            setCurrentGesture(null);
-            setGestureConfidence(0);
+            // No hands detected - clear gesture
+            if (currentGestureRef.current !== null) {
+                setCurrentGesture(null);
+                setGestureConfidence(0);
+            }
         }
-    }, [user, currentGesture]);
+    }, [user]);
 
     useEffect(() => {
         const initHands = async () => {
@@ -393,6 +409,13 @@ const PatientVideoCall = ({ callData, onEnd }) => {
 
     // Detection loop with error handling
     const startDetection = () => {
+        // Prevent starting multiple loops
+        if (animationRef.current) {
+            console.log('⚠️ Detection already running, skipping duplicate start');
+            return;
+        }
+
+        console.log('🔄 Starting gesture detection loop...');
         const detect = async () => {
             try {
                 if (videoRef.current &&
