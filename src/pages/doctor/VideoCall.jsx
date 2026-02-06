@@ -325,8 +325,10 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                         <div className="gesture-list">
                             {/* SHOW ALL GESTURES (Ignore Sender ID) */}
                             {(() => {
-                                // Deduplicate consecutive identical gestures
+                                // Get all gesture messages
                                 const gestures = messages.filter(m => m.message_type === 'gesture');
+
+                                // Deduplicate consecutive identical gestures
                                 const uniqueGestures = gestures.reduce((acc, curr) => {
                                     const last = acc[acc.length - 1];
                                     if (!last || last.content !== curr.content) {
@@ -339,7 +341,8 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                                     return <p className="no-gestures">Waiting for patient signs...</p>;
                                 }
 
-                                return uniqueGestures.slice(-5).reverse().map((msg, idx) => (
+                                // Show last 10 gestures (increased from 5)
+                                return uniqueGestures.slice(-10).reverse().map((msg, idx) => (
                                     <div key={`gesture-${msg.id}-${idx}-${msg.created_at}`} className={`gesture-item ${idx === 0 ? 'latest' : ''}`}>
                                         <span className="gesture-label">🤟 {msg.content}</span>
                                         <span className="gesture-time">

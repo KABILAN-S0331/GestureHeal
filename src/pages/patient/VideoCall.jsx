@@ -152,7 +152,14 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
                 const prediction = await predict(normalized);
 
-                if (prediction && prediction.confidence > 0.90 && prediction.gesture !== 'NONE') {
+                // Log ALL predictions for debugging
+                if (prediction) {
+                    console.log('🖐️ Prediction:', prediction.gesture,
+                        'Confidence:', (prediction.confidence * 100).toFixed(1) + '%',
+                        prediction.confidence >= 0.70 ? '✅ Above threshold' : '❌ Below 70%');
+                }
+
+                if (prediction && prediction.confidence > 0.70 && prediction.gesture !== 'NONE') {
                     console.log('🤟 Detected:', prediction.gesture, 'Confidence:', prediction.confidence.toFixed(2));
                     setCurrentGesture(prediction.gesture);
                     setGestureConfidence(prediction.confidence);
