@@ -36,7 +36,6 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
     const [signVideos, setSignVideos] = useState([]);
     const [playingVideo, setPlayingVideo] = useState(null);
     const [callDuration, setCallDuration] = useState(0);
-    const [textMessage, setTextMessage] = useState(''); // New state for text input
 
     const videoRef = useRef(null);
     const signVideoRef = useRef(null);
@@ -355,39 +354,30 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                         </div>
                     </div>
 
-                    {/* Manual Text Input Area */}
-                    <form onSubmit={handleSendText} className="manual-input-area" style={{ marginTop: '1rem', display: 'flex', gap: '8px' }}>
-                        <input
-                            type="text"
-                            value={textMessage}
-                            onChange={(e) => setTextMessage(e.target.value)}
-                            placeholder="Type a message..."
-                            style={{
-                                flex: 1,
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                background: 'rgba(255,255,255,0.05)',
-                                color: 'white',
-                                outline: 'none'
-                            }}
-                        />
-                        <button
-                            type="submit"
-                            disabled={!textMessage.trim()}
-                            style={{
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                border: 'none',
-                                background: 'var(--primary)',
-                                color: 'white',
-                                cursor: textMessage.trim() ? 'pointer' : 'not-allowed',
-                                opacity: textMessage.trim() ? 1 : 0.5
-                            }}
-                        >
-                            Send
-                        </button>
-                    </form>
+                    {/* Chat History */}
+                    <div className="chat-panel">
+                        <h3>💬 Conversation</h3>
+                        <div className="chat-messages">
+                            {messages.length === 0 ? (
+                                <p className="no-messages">No messages yet</p>
+                            ) : (
+                                messages.map((msg, index) => (
+                                    <div
+                                        key={`msg-${msg.id}-${index}-${msg.created_at}`}
+                                        className={`chat-message ${msg.sender_id === user.id ? 'sent' : 'received'} ${msg.message_type}`}
+                                    >
+                                        <span className="message-type-icon">
+                                            {msg.message_type === 'gesture' && '🤟'}
+                                            {msg.message_type === 'text' && '💬'}
+                                            {msg.message_type === 'quick_response' && '📢'}
+                                        </span>
+                                        <span className="message-content">{msg.content}</span>
+                                    </div>
+                                ))
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    </div>
                 </div>
             </div>
 
