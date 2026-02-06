@@ -402,6 +402,16 @@ const DoctorDashboard = () => {
                                             <p className="distance">
                                                 📍 {call.distance_km?.toFixed(1)} km away
                                             </p>
+                                            {call.patient_lat && call.patient_lng && (
+                                                <a
+                                                    href={`https://www.google.com/maps/dir/?api=1&destination=${call.patient_lat},${call.patient_lng}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="location-link"
+                                                >
+                                                    🗺️ View Live Location
+                                                </a>
+                                            )}
                                             <p className="time">
                                                 ⏱️ {new Date(call.created_at).toLocaleTimeString()}
                                             </p>
