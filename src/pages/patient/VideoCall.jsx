@@ -35,6 +35,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     const [currentGesture, setCurrentGesture] = useState(null);
     const [gestureConfidence, setGestureConfidence] = useState(0);
     const [cameraActive, setCameraActive] = useState(false);
+    const [detectionRunning, setDetectionRunning] = useState(false);
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
@@ -416,6 +417,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         }
 
         console.log('🔄 Starting gesture detection loop...');
+        setDetectionRunning(true);
         const detect = async () => {
             try {
                 if (videoRef.current &&
@@ -473,6 +475,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
             }
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current);
+                setDetectionRunning(false);
             }
         };
     }, []);
@@ -564,6 +567,30 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                                 objectFit: 'cover'
                             }}
                         />
+
+                        {/* Gesture Detection Status Indicator */}
+                        <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            left: '10px',
+                            background: 'rgba(0, 0, 0, 0.7)',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.75rem',
+                            zIndex: 3,
+                            color: 'white'
+                        }}>
+                            <div style={{ marginBottom: '4px' }}>
+                                {mediapipeReady ? '✅' : '⏳'} MediaPipe: {mediapipeReady ? 'Ready' : 'Loading...'}
+                            </div>
+                            <div style={{ marginBottom: '4px' }}>
+                                {cameraActive ? '✅' : '⏳'} Camera: {cameraActive ? 'Active' : 'Inactive'}
+                            </div>
+                            <div>
+                                {detectionRunning ? '✅' : '⏳'} Detection: {detectionRunning ? 'Running' : 'Stopped'}
+                            </div>
+                            {callId && <div style={{ marginTop: '4px', fontSize: '0.7rem', opacity: 0.7 }}>Call ID: {callId.slice(0, 8)}</div>}
+                        </div>
 
                         {/* Gesture Overlay */}
                         {currentGesture && (
