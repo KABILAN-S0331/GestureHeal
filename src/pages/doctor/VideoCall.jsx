@@ -314,7 +314,6 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                             ref={remoteVideoRef}
                             autoPlay
                             playsInline
-                            muted // Mute to prevent local echo/feedback during testing
                             className="remote-video"
                             style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#222' }}
                         />
