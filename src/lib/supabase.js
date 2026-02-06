@@ -312,7 +312,7 @@ export const subscribeToAppointments = (userId, role, callback) => {
         .subscribe();
 };
 
-// WebRTC Signaling (using Broadcast channel)
+// WebRTC Signaling (using Broadcast channel + Database fallback)
 export const subscribeToSignals = (callId, callback) => {
     return supabase
         .channel(`signaling:${callId}`)
@@ -321,6 +321,12 @@ export const subscribeToSignals = (callId, callback) => {
 };
 
 export const sendSignal = async (callId, signalData) => {
+    // Store in database for persistence
+    if (signalData.type === 'offer' || signalData.type === 'answer') {
+        await storeSignal(callId, signalData.type, signalData);
+    }
+
+    // Also send via broadcast for immediate delivery
     return supabase
         .channel(`signaling:${callId}`)
         .send({
@@ -328,4 +334,61 @@ export const sendSignal = async (callId, signalData) => {
             event: 'signal',
             payload: signalData
         });
+};
+
+// Database-backed signal storage (for offer/answer persistence)
+export const storeSignal = async (callId, signalType, signalData) => {
+    // Store in emergency_calls table as a simple JSON column workaround
+    // Using the room_url field to store signal data temporarily
+    const updateField = signalType === 'offer' ? 'offer_data' : 'answer_data';
+
+    try {
+        // Try to update emergency_calls or appointments
+        const { error } = await supabase
+            .from('emergency_calls')
+            .update({ [updateField]: JSON.stringify(signalData) })
+            .eq('id', callId);
+
+        if (error) {
+            // Try appointments table
+            await supabase
+                .from('appointments')
+                .update({ [updateField]: JSON.stringify(signalData) })
+                .eq('id', callId);
+        }
+    } catch (e) {
+        console.log('Signal storage not available, using broadcast only');
+    }
+};
+
+// Poll for stored signals (fallback when broadcast misses)
+export const getStoredSignal = async (callId, signalType) => {
+    const field = signalType === 'offer' ? 'offer_data' : 'answer_data';
+
+    try {
+        // Try emergency_calls first
+        let { data } = await supabase
+            .from('emergency_calls')
+            .select(field)
+            .eq('id', callId)
+            .single();
+
+        if (!data?.[field]) {
+            // Try appointments
+            const result = await supabase
+                .from('appointments')
+                .select(field)
+                .eq('id', callId)
+                .single();
+            data = result.data;
+        }
+
+        if (data?.[field]) {
+            return JSON.parse(data[field]);
+        }
+    } catch (e) {
+        console.log('Could not retrieve stored signal');
+    }
+
+    return null;
 };

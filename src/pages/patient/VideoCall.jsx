@@ -8,7 +8,8 @@ import {
     getCallMessages,
     subscribeToMessages,
     subscribeToSignals,
-    sendSignal
+    sendSignal,
+    getStoredSignal
 } from '../../lib/supabase';
 import { normalizeLandmarks } from '../../utils/landmarkNormalizer';
 import { loadModel, predict, isModelLoaded } from '../../utils/gestureClassifier';
@@ -185,60 +186,79 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         sendReadySignal();
         readyInterval = setInterval(sendReadySignal, 5000); // Reduced frequency
 
+        // Process an offer (shared between broadcast and polling)
+        const processOffer = async (offerData) => {
+            if (connected || peerConnection.current) return; // Already processing
+
+            connected = true;
+            if (readyInterval) clearInterval(readyInterval);
+            console.log('📞 Processing offer...');
+
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            peerConnection.current = pc;
+
+            // Add local stream tracks
+            streamRef.current.getTracks().forEach(track => {
+                pc.addTrack(track, streamRef.current);
+            });
+
+            // Handle incoming stream (Doctor Video)
+            pc.ontrack = (event) => {
+                console.log('🎥 Received Doctor stream');
+                if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = event.streams[0];
+                }
+            };
+
+            // Handle ICE candidates
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    sendSignal(callId, { type: 'ice-candidate', candidate: event.candidate });
+                }
+            };
+
+            // Set remote desc (offer)
+            await pc.setRemoteDescription(new RTCSessionDescription(offerData.offer));
+
+            // Drain candidate queue
+            while (candidateQueue.current.length > 0) {
+                const candidate = candidateQueue.current.shift();
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (e) {
+                    console.error('Error adding buffered candidate', e);
+                }
+            }
+
+            // Create and send answer
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            await sendSignal(callId, { type: 'answer', answer });
+            console.log('✅ Answer sent!');
+        };
+
+        // Poll for stored offers (fallback when broadcast misses)
+        const pollInterval = setInterval(async () => {
+            if (connected) {
+                clearInterval(pollInterval);
+                return;
+            }
+            console.log('🔍 Polling for stored offer...');
+            const storedOffer = await getStoredSignal(callId, 'offer');
+            if (storedOffer?.offer) {
+                console.log('📦 Found stored offer, processing...');
+                await processOffer(storedOffer);
+                clearInterval(pollInterval);
+            }
+        }, 3000);
+
         const subscription = subscribeToSignals(callId, async (data) => {
             console.log('📡 Patient received signal:', data.type);
 
             if (data.type === 'offer') {
-                // Stop sending ready signals
-                connected = true;
-                if (readyInterval) clearInterval(readyInterval);
-                console.log('📞 Received offer, creating answer...');
-                const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-                });
-                peerConnection.current = pc;
-
-                // Add local stream tracks
-                streamRef.current.getTracks().forEach(track => {
-                    pc.addTrack(track, streamRef.current);
-                });
-
-                // Handle incoming stream (Doctor Video)
-                pc.ontrack = (event) => {
-                    console.log('🎥 Received Doctor stream', event.streams[0]);
-                    event.streams[0].getTracks().forEach(t => console.log('   Track:', t.kind, t.enabled, t.muted));
-                    if (remoteVideoRef.current) {
-                        remoteVideoRef.current.srcObject = event.streams[0];
-                    }
-                };
-
-                // Handle ICE candidates
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        sendSignal(callId, { type: 'ice-candidate', candidate: event.candidate });
-                    }
-                };
-
-                // Set remote desc (offer)
-                await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-
-                // Drain candidate queue (if any arrived before offer processing finished)
-                while (candidateQueue.current.length > 0) {
-                    const candidate = candidateQueue.current.shift();
-                    try {
-                        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                    } catch (e) {
-                        console.error('Error adding buffered candidate', e);
-                    }
-                }
-
-                // Create answer
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-
-                // Send answer
-                await sendSignal(callId, { type: 'answer', answer });
-                console.log('✅ Answer sent!');
+                await processOffer(data);
             } else if (data.type === 'ice-candidate') {
                 if (peerConnection.current) {
                     if (peerConnection.current.remoteDescription) {
