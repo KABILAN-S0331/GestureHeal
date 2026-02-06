@@ -64,6 +64,9 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                     setCallId(callData.id);
                     setCallStatus('active');
 
+                    // Auto-start camera for appointment calls so WebRTC can connect
+                    await autoStartCamera();
+
                     // Subscribe to messages for this call
                     const subscription = subscribeToMessages(callData.id, (payload) => {
                         if (payload.new) {
@@ -91,6 +94,9 @@ const PatientVideoCall = ({ callData, onEnd }) => {
 
                     setCallId(data.id);
                     setCallStatus(data.status === 'active' ? 'active' : 'waiting');
+
+                    // Auto-start camera for emergency calls
+                    await autoStartCamera();
 
                     // Subscribe to messages for this call
                     const subscription = subscribeToMessages(data.id, (payload) => {
@@ -277,7 +283,33 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         }
     }, [user, currentGesture]); // Removed callId from dependency to avoid re-binding loop
 
-    // Start camera
+    // Auto-start camera (used when joining calls to activate WebRTC immediately)
+    const autoStartCamera = async () => {
+        try {
+            console.log('📹 Auto-starting camera...');
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: 640, height: 480 },
+                audio: true // Also get audio for call
+            });
+
+            streamRef.current = stream;
+
+            // Wait a tick for video element to be available
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    videoRef.current.play().catch(e => console.warn('Video play error:', e));
+                }
+            }, 100);
+
+            setCameraActive(true);
+            console.log('✅ Camera auto-started for call');
+        } catch (err) {
+            console.error('❌ Auto-start camera error:', err);
+        }
+    };
+
+    // Start camera (manual button click)
     const startCamera = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
