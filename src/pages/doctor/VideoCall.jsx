@@ -167,6 +167,8 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
     }
 
     const remoteVideoRef = useRef(null);
+    const localVideoRef = useRef(null);
+    const localStreamRef = useRef(null);
     const peerConnection = useRef(null);
     const candidateQueue = useRef([]); // Buffer for ICE candidates
 
@@ -189,6 +191,12 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
             try {
                 const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 console.log('📹 Doctor camera acquired:', localStream.getTracks().map(t => `${t.kind}: ${t.enabled}`));
+                localStreamRef.current = localStream;
+
+                // Display local video preview
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = localStream;
+                }
 
                 // Add tracks to PC
                 localStream.getTracks().forEach(track => {
@@ -203,10 +211,21 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
 
             // Handle incoming stream (Patient Video)
             pc.ontrack = (event) => {
-                console.log('🎥 Received remote stream');
+                console.log('🎥 Received remote stream:', event.streams[0]);
+                console.log('   Tracks:', event.streams[0].getTracks().map(t => `${t.kind}: ${t.enabled}`));
                 if (remoteVideoRef.current) {
                     remoteVideoRef.current.srcObject = event.streams[0];
+                    // Force play the video
+                    remoteVideoRef.current.play().catch(e => console.log('Video play error:', e));
                 }
+            };
+
+            // Monitor connection state
+            pc.onconnectionstatechange = () => {
+                console.log('🔗 Connection state:', pc.connectionState);
+            };
+            pc.oniceconnectionstatechange = () => {
+                console.log('🧊 ICE connection state:', pc.iceConnectionState);
             };
 
             // Handle ICE candidates
@@ -293,14 +312,46 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                 {/* Left: Patient Video & Gestures */}
                 <div className="video-section">
                     {/* Patient Video Feed */}
-                    <div className="video-wrapper patient-video">
+                    <div className="video-wrapper patient-video" style={{ position: 'relative' }}>
                         <video
                             ref={remoteVideoRef}
                             autoPlay
                             playsInline
-                            muted // Mute to prevent local echo/feedback during testing
                             className="remote-video"
                             style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#222' }}
+                        />
+                        {/* Placeholder when no video */}
+                        <div className="video-placeholder" style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: '#64748b',
+                            textAlign: 'center',
+                            zIndex: 0
+                        }}>
+                            <span style={{ fontSize: '48px' }}>👤</span>
+                            <p>Waiting for patient video...</p>
+                        </div>
+
+                        {/* Doctor's Local Video Preview */}
+                        <video
+                            ref={localVideoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            style={{
+                                position: 'absolute',
+                                bottom: '12px',
+                                right: '12px',
+                                width: '120px',
+                                height: '90px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255,255,255,0.3)',
+                                objectFit: 'cover',
+                                zIndex: 10,
+                                background: '#1e293b'
+                            }}
                         />
                     </div>
 
