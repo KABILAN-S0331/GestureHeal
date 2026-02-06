@@ -454,10 +454,21 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         };
     }, []);
 
-    // Start camera on mount
+    // Start camera on mount (for emergency calls where autoStart isn't used)
     useEffect(() => {
-        startCamera();
+        // Only auto-start if no call ID yet (emergency flow uses initCall -> autoStartCamera)
+        if (!callId) {
+            startCamera();
+        }
     }, []);
+
+    // Start detection when both camera AND MediaPipe are ready
+    useEffect(() => {
+        if (cameraActive && mediapipeReady && handsRef.current && !animationRef.current) {
+            console.log('🔄 Starting detection (camera + MediaPipe both ready)');
+            startDetection();
+        }
+    }, [cameraActive, mediapipeReady]);
 
     // Filter doctor messages
     const doctorMessages = messages.filter(m => m.sender_id !== user?.id);
