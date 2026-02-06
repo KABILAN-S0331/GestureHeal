@@ -229,7 +229,12 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                     console.log('👋 Patient ready signal received, sending offer...');
                     await sendOffer();
                 } else if (data.type === 'answer') {
-                    console.log('✅ Received answer');
+                    console.log('✅ Received answer, stopping offer resend');
+                    // Stop resending offers - connection established
+                    if (offerInterval) {
+                        clearInterval(offerInterval);
+                        offerInterval = null;
+                    }
                     if (pc.signalingState === 'have-local-offer') {
                         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
 
@@ -256,13 +261,13 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                 }
             });
 
-            // Also periodically send offer in case patient missed it (every 3 seconds)
+            // Also periodically send offer in case patient missed it (reduced frequency)
             offerInterval = setInterval(async () => {
                 if (!offerSent.current || pc.connectionState === 'disconnected') {
                     console.log('🔄 Re-sending offer...');
                     await sendOffer();
                 }
-            }, 3000);
+            }, 5000); // 5 seconds to reduce overhead
 
             // Send initial offer immediately too (for patients already waiting)
             setTimeout(() => sendOffer(), 500);

@@ -172,21 +172,26 @@ const PatientVideoCall = ({ callData, onEnd }) => {
         console.log('📡 Subscribing to signals for call:', callId, 'Camera active:', cameraActive);
 
         // Send patient-ready signal to let doctor know we're ready
+        let readyInterval = null;
+        let connected = false;
+
         const sendReadySignal = async () => {
+            if (connected) return; // Stop once connected
             console.log('👋 Sending patient-ready signal...');
             await sendSignal(callId, { type: 'patient-ready' });
         };
 
-        // Send ready signal immediately
+        // Send ready signal immediately and periodically (less frequent)
         sendReadySignal();
-
-        // Also send periodically in case doctor missed it
-        const readyInterval = setInterval(sendReadySignal, 2000);
+        readyInterval = setInterval(sendReadySignal, 5000); // Reduced frequency
 
         const subscription = subscribeToSignals(callId, async (data) => {
             console.log('📡 Patient received signal:', data.type);
 
             if (data.type === 'offer') {
+                // Stop sending ready signals
+                connected = true;
+                if (readyInterval) clearInterval(readyInterval);
                 console.log('📞 Received offer, creating answer...');
                 const pc = new RTCPeerConnection({
                     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
