@@ -424,3 +424,5 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
         </div >
     );
 };
+
+export default DoctorVideoCall;
