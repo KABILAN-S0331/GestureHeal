@@ -179,8 +179,13 @@ const DoctorDashboard = () => {
         return (
             <DoctorVideoCall
                 callData={activeCall}
-                onEnd={() => {
+                onEnd={async () => {
+                    // Mark appointment as completed if this was an appointment call
+                    if (activeCall.id && !activeCall.room_url?.includes('room-')) {
+                        await updateAppointmentStatus(activeCall.id, 'completed');
+                    }
                     setActiveCall(null);
+                    fetchAppointments();
                     fetchEmergencyCalls();
                 }}
             />

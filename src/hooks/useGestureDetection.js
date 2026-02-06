@@ -17,7 +17,7 @@ import { createStabilityPipeline } from '../utils/stabilityPipeline';
 export function useGestureDetection(options = {}) {
     const {
         modelPath = '/model.json',
-        confidenceThreshold = 0.85,
+        confidenceThreshold = 0.90,
         smoothingWindow = 5,
         debounceMs = 1000,
         onGestureDetected = null

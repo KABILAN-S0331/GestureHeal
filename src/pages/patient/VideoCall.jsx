@@ -42,44 +42,69 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     const messagesEndRef = useRef(null);
     const isCreatingCall = useRef(false);
 
-    // Initialize emergency call
+    // Initialize call (supports both emergency and scheduled appointment calls)
     useEffect(() => {
         const initCall = async () => {
             // Prevent double-invocation (React StrictMode or re-renders)
-            if (!callData?.location || !user?.id || isCreatingCall.current) return;
+            if (!user?.id || isCreatingCall.current) return;
+
+            // Check if this is a scheduled appointment call (has id but no location)
+            const isAppointmentCall = callData?.id && !callData?.location;
+
+            // For emergency calls, we need location
+            if (!isAppointmentCall && !callData?.location) return;
 
             try {
                 isCreatingCall.current = true;
                 setCallStatus('connecting');
 
-                // Create emergency call in database (or get existing one)
-                const { data, error, isExisting } = await createEmergencyCall(
-                    user.id,
-                    callData.location,
-                    profile?.full_name || 'Patient'
-                );
+                if (isAppointmentCall) {
+                    // Scheduled appointment call - use passed ID directly
+                    console.log('📅 Joining scheduled appointment call:', callData.id);
+                    setCallId(callData.id);
+                    setCallStatus('active');
 
-                if (error) throw error;
+                    // Subscribe to messages for this call
+                    const subscription = subscribeToMessages(callData.id, (payload) => {
+                        if (payload.new) {
+                            setMessages(prev => [...prev, payload.new]);
+                        }
+                    });
 
-                if (isExisting) {
-                    console.log('Rejoining existing call:', data.id);
-                }
+                    return () => {
+                        subscription.unsubscribe();
+                    };
+                } else {
+                    // Emergency call - create new call in database
+                    console.log('🚨 Creating emergency call...');
+                    const { data, error, isExisting } = await createEmergencyCall(
+                        user.id,
+                        callData.location,
+                        profile?.full_name || 'Patient'
+                    );
 
-                setCallId(data.id);
-                setCallStatus(data.status === 'active' ? 'active' : 'waiting');
+                    if (error) throw error;
 
-                // Subscribe to messages for this call
-                const subscription = subscribeToMessages(data.id, (payload) => {
-                    if (payload.new) {
-                        setMessages(prev => [...prev, payload.new]);
+                    if (isExisting) {
+                        console.log('Rejoining existing call:', data.id);
                     }
-                });
 
-                return () => {
-                    subscription.unsubscribe();
-                };
+                    setCallId(data.id);
+                    setCallStatus(data.status === 'active' ? 'active' : 'waiting');
+
+                    // Subscribe to messages for this call
+                    const subscription = subscribeToMessages(data.id, (payload) => {
+                        if (payload.new) {
+                            setMessages(prev => [...prev, payload.new]);
+                        }
+                    });
+
+                    return () => {
+                        subscription.unsubscribe();
+                    };
+                }
             } catch (err) {
-                console.error('Failed to create call:', err);
+                console.error('Failed to create/join call:', err);
                 setCallStatus('error');
             }
         };
@@ -229,7 +254,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
                 const prediction = await predict(normalized);
 
                 // Lower threshold to 0.5 and filter out NONE
-                if (prediction && prediction.confidence > 0.85 && prediction.gesture !== 'NONE') {
+                if (prediction && prediction.confidence > 0.90 && prediction.gesture !== 'NONE') {
                     console.log('🤟 Detected:', prediction.gesture);
                     setCurrentGesture(prediction.gesture);
                     setGestureConfidence(prediction.confidence);

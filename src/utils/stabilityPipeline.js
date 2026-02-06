@@ -8,7 +8,7 @@
  */
 
 const DEFAULT_CONFIG = {
-    confidenceThreshold: 0.85,   // Reject if below this
+    confidenceThreshold: 0.90,   // Reject if below this
     windowSize: 5,               // Frames for smoothing
     debounceMs: 1000             // Cooldown after trigger
 };

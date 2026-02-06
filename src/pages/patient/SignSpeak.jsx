@@ -91,7 +91,7 @@ const SignSpeak = ({ onBack }) => {
                 const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
                 const prediction = await predict(normalized);
 
-                if (prediction && prediction.confidence > 0.85) {
+                if (prediction && prediction.confidence > 0.90) {
                     // Only update if it's a NEW different gesture
                     if (prediction.gesture !== lastGestureRef.current) {
                         lastGestureRef.current = prediction.gesture;
