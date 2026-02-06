@@ -235,16 +235,9 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                 }
             };
 
-            // Create offer
-            const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
-            await pc.setLocalDescription(offer);
-
-            // Send offer
-            await sendSignal(callData.id, { type: 'offer', offer });
-            console.log('✅ Offer sent');
-
-            // Listen for answer
+            // SUBSCRIBE FIRST - Listen for answer BEFORE sending offer
             const subscription = subscribeToSignals(callData.id, async (data) => {
+                console.log('📡 Doctor received signal:', data.type);
                 if (data.type === 'answer') {
                     console.log('✅ Received answer');
                     if (pc.signalingState === 'have-local-offer') {
@@ -277,6 +270,17 @@ const DoctorVideoCall = ({ callData, onEnd }) => {
                     }
                 }
             });
+
+            // Wait a moment for subscription to be ready
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Create and send offer AFTER subscription is ready
+            const offer = await pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
+            await pc.setLocalDescription(offer);
+
+            // Send offer
+            await sendSignal(callData.id, { type: 'offer', offer });
+            console.log('✅ Offer sent (after subscription ready)');
 
             return () => {
                 subscription.unsubscribe();

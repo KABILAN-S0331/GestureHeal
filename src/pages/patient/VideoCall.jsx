@@ -161,12 +161,16 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     const remoteVideoRef = useRef(null);
 
     useEffect(() => {
-        if (!callId || !cameraActive || !streamRef.current) return;
+        if (!callId || !cameraActive || !streamRef.current) {
+            console.log('⏳ Patient waiting for:', { callId: !!callId, cameraActive, hasStream: !!streamRef.current });
+            return;
+        }
 
-        console.log('📡 Subscribing to signals for call:', callId, 'Camera active:', cameraActive);
+        console.log('📡 Patient subscribing to signals for call:', callId);
+        console.log('   Camera active:', cameraActive, 'Stream tracks:', streamRef.current?.getTracks().length);
 
         const subscription = subscribeToSignals(callId, async (data) => {
-            console.log('📡 Signal received:', data.type);
+            console.log('📡 Patient received signal:', data.type);
 
             if (data.type === 'offer') {
                 console.log('📞 Received offer, creating answer...');
