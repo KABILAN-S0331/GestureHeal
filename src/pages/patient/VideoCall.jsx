@@ -127,6 +127,42 @@ const PatientVideoCall = ({ callData, onEnd }) => {
     // Initialize MediaPipe Hands
     const [mediapipeReady, setMediapipeReady] = useState(false);
 
+    // Use ref to access latest callId inside MediaPipe callback without re-binding
+    const callIdRef = useRef(null);
+    useEffect(() => { callIdRef.current = callId; }, [callId]);
+
+    // Handle hand detection - defined BEFORE MediaPipe init so it can be passed to onResults
+    const handleHandResults = useCallback(async (results) => {
+        if (!callIdRef.current) return; // Wait for call ID
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            if (isModelLoaded()) {
+                const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
+                const prediction = await predict(normalized);
+
+                if (prediction && prediction.confidence > 0.90 && prediction.gesture !== 'NONE') {
+                    console.log('🤟 Detected:', prediction.gesture);
+                    setCurrentGesture(prediction.gesture);
+                    setGestureConfidence(prediction.confidence);
+
+                    // Send gesture as message
+                    if (prediction.gesture !== currentGesture) {
+                        console.log('🚀 Sending gesture:', prediction.gesture);
+                        sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
+                    }
+                } else if (!prediction || prediction.gesture === 'NONE') {
+                    if (prediction && prediction.confidence > 0.8) {
+                        setCurrentGesture(null);
+                        setGestureConfidence(0);
+                    }
+                }
+            }
+        } else {
+            setCurrentGesture(null);
+            setGestureConfidence(0);
+        }
+    }, [user, currentGesture]);
+
     useEffect(() => {
         const initHands = async () => {
             try {
@@ -160,7 +196,7 @@ const PatientVideoCall = ({ callData, onEnd }) => {
             }
         };
         initHands();
-    }, []);
+    }, [handleHandResults]);
 
     // WebRTC Signaling (Answer side)
     const peerConnection = useRef(null);
@@ -283,43 +319,6 @@ const PatientVideoCall = ({ callData, onEnd }) => {
             }
         };
     }, [callId, cameraActive]);
-
-    // Use ref to access latest callId inside MediaPipe callback without re-binding
-    const callIdRef = useRef(null);
-    useEffect(() => { callIdRef.current = callId; }, [callId]);
-
-    // Handle hand detection
-    const handleHandResults = useCallback(async (results) => {
-        if (!callIdRef.current) return; // Wait for call ID
-
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            if (isModelLoaded()) {
-                const normalized = normalizeLandmarks(results.multiHandLandmarks[0]);
-                const prediction = await predict(normalized);
-
-                // Lower threshold to 0.5 and filter out NONE
-                if (prediction && prediction.confidence > 0.90 && prediction.gesture !== 'NONE') {
-                    console.log('🤟 Detected:', prediction.gesture);
-                    setCurrentGesture(prediction.gesture);
-                    setGestureConfidence(prediction.confidence);
-
-                    // Send gesture as message
-                    if (prediction.gesture !== currentGesture) {
-                        console.log('🚀 Sending gesture:', prediction.gesture);
-                        sendMessage(callIdRef.current, user.id, prediction.gesture, 'gesture');
-                    }
-                } else if (!prediction || prediction.gesture === 'NONE') {
-                    if (prediction && prediction.confidence > 0.8) {
-                        setCurrentGesture(null);
-                        setGestureConfidence(0);
-                    }
-                }
-            }
-        } else {
-            setCurrentGesture(null);
-            setGestureConfidence(0);
-        }
-    }, [user, currentGesture]); // Removed callId from dependency to avoid re-binding loop
 
     // Auto-start camera (used when joining calls to activate WebRTC immediately)
     const autoStartCamera = async () => {
